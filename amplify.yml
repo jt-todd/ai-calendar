@@ -5,7 +5,15 @@ frontend:
       commands:
         - nvm install 20
         - nvm use 20
+        - npm install
     build:
       commands:
-        - npm install
         - npm run build
+  artifacts:
+    baseDirectory: .next
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - .next/cache/**/*
+      - node_modules/**/*
