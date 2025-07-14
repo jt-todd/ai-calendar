@@ -13,7 +13,7 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  console.log("🔐 OPENAI_API_KEY:", process.env.OPENAI_API_KEY?.slice(0, 6)); // safe preview
+  console.log("🔐 OPENAI_API_KEY:", process.env.OPENAI_API_KEY?.slice(0, 6)); // Preview only
   console.log("📥 Request body:", req.body);
 
   const { input } = req.body;
@@ -21,7 +21,6 @@ export default async function handler(
   if (!input) {
     return res.status(400).json({ error: "Missing input" });
   }
-}
 
   // Construct the prompt
   const prompt = `
@@ -42,9 +41,9 @@ Return a JSON array of events with "title", "start", and "end".
     // Return plan
     res.status(200).json({ plan });
   } catch (error: any) {
-    console.error("OpenAI API error:", error);
-    res
-      .status(500)
-      .json({ error: error?.message || "OpenAI API error occurred" });
+    console.error("❌ OpenAI API error:", error);
+    res.status(500).json({
+      error: error?.message || "OpenAI API error occurred",
+    });
   }
 }
