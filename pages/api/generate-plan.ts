@@ -13,12 +13,15 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
+  console.log("🔐 OPENAI_API_KEY:", process.env.OPENAI_API_KEY?.slice(0, 6)); // safe preview
+  console.log("📥 Request body:", req.body);
+
   const { input } = req.body;
 
-  // Check for missing input
   if (!input) {
     return res.status(400).json({ error: "Missing input" });
   }
+}
 
   // Construct the prompt
   const prompt = `
