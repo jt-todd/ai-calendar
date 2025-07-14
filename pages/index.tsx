@@ -1,47 +1,68 @@
 import { useState } from "react";
 
-export default function Home() {
-  // State to store user input text
+export default function HomePage() {
   const [input, setInput] = useState("");
-  // State to store the AI-generated calendar plan returned from backend
   const [plan, setPlan] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  // Handle form submission
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault(); // Prevent page reload on form submit
+  async function handleGeneratePlan() {
+    if (!input.trim()) {
+      setError("Please enter a request");
+      return;
+    }
+    setError("");
+    setLoading(true);
+    setPlan("");
 
-    // Call backend API route /api/generate-plan with user input
-    const res = await fetch("/api/generate-plan", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ input }), // Send input as JSON
-    });
+    try {
+      const response = await fetch("/api/generate-plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ input }),
+      });
 
-    const data = await res.json(); // Parse JSON response
-    setPlan(data.plan); // Save AI plan to state to display
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || "API error");
+      } else {
+        setPlan(data.plan);
+      }
+    } catch (e) {
+      setError("Network or server error");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
-    <main>
-      <h1>AI Calendar Planner</h1>
-      <form onSubmit={handleSubmit}>
-        {/* Text input for user to describe calendar request */}
-        <input
-          type="text"
-          placeholder="Describe your calendar plan"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          required
-          style={{ width: "300px" }}
-        />
-        <button type="submit">Generate Plan</button>
-      </form>
-
-      {/* Display AI-generated calendar plan */}
+    <main style={{ maxWidth: 600, margin: "auto", padding: 20 }}>
+      <h1>Calendar Plan Generator</h1>
+      <textarea
+        rows={4}
+        placeholder="Describe your calendar request"
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        style={{ width: "100%", marginBottom: 12 }}
+      />
+      <button onClick={handleGeneratePlan} disabled={loading}>
+        {loading ? "Generating..." : "Generate Plan"}
+      </button>
+      {error && <p style={{ color: "red" }}>{error}</p>}
       {plan && (
-        <pre style={{ whiteSpace: "pre-wrap", marginTop: "20px" }}>
-          {plan}
-        </pre>
+        <>
+          <h2>Generated Plan:</h2>
+          <pre
+            style={{
+              backgroundColor: "#f0f0f0",
+              padding: 12,
+              whiteSpace: "pre-wrap",
+            }}
+          >
+            {plan}
+          </pre>
+        </>
       )}
     </main>
   );
