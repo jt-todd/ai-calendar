@@ -1,44 +1,47 @@
-
+// Import Next.js API types
 import type { NextApiRequest, NextApiResponse } from "next";
-import { Configuration, OpenAIApi } from "openai";
+// Import OpenAI SDK
+import OpenAI from "openai";
 
-// Configure OpenAI client with API key from environment variable
-const configuration = new Configuration({
+// Instantiate OpenAI client with API key from environment variable
+const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-const openai = new OpenAIApi(configuration);
 
+// API route handler
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const { input } = req.body; // Extract input text from request body
+  const { input } = req.body;
 
+  // Check for missing input
   if (!input) {
-    // If no input provided, return an error
     return res.status(400).json({ error: "Missing input" });
   }
 
-  // Prompt OpenAI to generate a calendar plan based on user input
+  // Construct the prompt
   const prompt = `
 Generate a calendar plan for this request: "${input}".
-Return JSON array of events with "title", "start", and "end".
+Return a JSON array of events with "title", "start", and "end".
 `;
 
   try {
-    // Call OpenAI's chat completion endpoint with the prompt
-    const completion = await openai.createChatCompletion({
+    // Make OpenAI API call
+    const completion = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [{ role: "user", content: prompt }],
     });
 
-    // Extract the AI's response text (the plan)
-    const plan = completion.data.choices[0].message?.content || "";
+    // Extract response content
+    const plan = completion.choices[0]?.message?.content || "";
 
-    // Send the plan back as JSON to the frontend
+    // Return plan
     res.status(200).json({ plan });
-  } catch (error) {
-    // On error, return a 500 with message
-    res.status(500).json({ error: "OpenAI API error" });
+  } catch (error: any) {
+    console.error("OpenAI API error:", error);
+    res
+      .status(500)
+      .json({ error: error?.message || "OpenAI API error occurred" });
   }
 }
