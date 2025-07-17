@@ -1,28 +1,18 @@
-// Import Next.js API types
+// /pages/api/generate-plan.ts
 import type { NextApiRequest, NextApiResponse } from "next";
-// Import OpenAI SDK
 import OpenAI from "openai";
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY, // Make sure this env var is set properly
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  console.log("🔐 OPENAI_API_KEY present?", !!process.env.OPENAI_API_KEY);
-  console.log("📥 Request method:", req.method);
-  console.log("📥 Request body:", req.body);
-
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method Not Allowed, use POST" });
-  }
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  console.log("📥 API request body:", req.body);
 
   const { input } = req.body;
 
-  if (!input || typeof input !== "string") {
-    return res.status(400).json({ error: "Missing or invalid 'input' parameter" });
+  if (!input) {
+    return res.status(400).json({ error: "Missing input" });
   }
 
   const prompt = `
@@ -36,15 +26,11 @@ Return a JSON array of events with "title", "start", and "end".
       messages: [{ role: "user", content: prompt }],
     });
 
-    const plan = completion.choices[0]?.message?.content || "";
+    const plan = completion.choices[0]?.message?.content || "No content generated";
 
     res.status(200).json({ plan });
   } catch (error: any) {
-    console.error("OpenAI API error:", error);
-
-    res.status(500).json({
-      error: error.message || "OpenAI API error occurred",
-      details: error.response?.data || null,
-    });
+    console.error("❌ OpenAI API error:", error);
+    res.status(500).json({ error: error?.message || "OpenAI API call failed" });
   }
 }
